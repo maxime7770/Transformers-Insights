@@ -25,11 +25,11 @@ class MultiHeadAttention(nn.Module):
         # dimensions of query and key are (batch_size * num_heads, seq_length, head_dim)
         # after transpose, dimensions is (batch_size * num_heads, head_dim, seq_length)
         scores = query @ key.transpose(-2, -1) / math.sqrt(self.head_dim)
-        # now, dimensions of scores is (batch_size * num_heads, seq_length, seq_length)
+        # Now, dimensions of scores is (batch_size * num_heads, seq_length, seq_length)
         if mask is not None:
             scores = scores.view(-1, scores.shape[0] // self.num_heads, mask.shape[1], mask.shape[2]) # for compatibility
-            scores = scores.masked_fill(mask == 0, float('-1e9'))
-            scores = scores.view(-1, mask.shape[1], mask.shape[2])
+            scores = scores.masked_fill(mask == 0, float('-1e20')) # mask to avoid attention on padding tokens
+            scores = scores.view(-1, mask.shape[1], mask.shape[2]) # reshape back to original shape
         # Normalize attention scores into attention weights
         attention_weights = F.softmax(scores, dim=-1)
 
@@ -50,7 +50,6 @@ class MultiHeadAttention(nn.Module):
         return self.output_linear(output)
 
 
-# Subclass an appropriate PyTorch class 
 class PositionalEncoder(nn.Module):
     def __init__(self, d_model, max_length):
         super(PositionalEncoder, self).__init__()
@@ -68,25 +67,21 @@ class PositionalEncoder(nn.Module):
         pe[:, 1::2] = torch.cos(position * div_term)
         self.pe = pe.unsqueeze(0)
     
-    # Update the embeddings tensor adding the positional encodings
     def forward(self, x):
-        x = x + self.pe[:, :x.size(1)]
+        x = x + self.pe[:, :x.size(1)] # update embeddings
         return x
 
 class FeedForwardSubLayer(nn.Module):
-    # Specify the two linear layers' input and output sizes
     def __init__(self, d_model, d_ff):
         super(FeedForwardSubLayer, self).__init__()
         self.fc1 = nn.Linear(d_model, d_ff)
         self.fc2 = nn.Linear(d_ff, d_model)
         self.relu = nn.ReLU()
 
-    # Apply a forward pass
     def forward(self, x):
         return self.fc2(self.relu(self.fc1(x)))
 
 
-# Complete the initialization of elements in the encoder layer
 class EncoderLayer(nn.Module):
     def __init__(self, d_model, num_heads, d_ff, dropout):
         super(EncoderLayer, self).__init__()
