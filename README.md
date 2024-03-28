@@ -2,6 +2,8 @@
 
 This project contains an implementation of the Transformer Encoder architecture, inspired by the "Attention Is All You Need" paper and BERT. It also aims to understand how the Encoder architecture transforms the input data under the hood by visualizing how embeddings are adapted during training. To illustrate this, the model is trained on a binary classification task using the IMDB dataset (positive and negative movie reviews).
 
+Make sure to check the [Medium article](https://medium.com/@maxwolf34/transformers-how-do-they-transform-your-data-72d69e383e0d) associated with this project.
+
 ## Installation
 
 Create a new Python environment
